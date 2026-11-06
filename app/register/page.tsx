@@ -50,17 +50,17 @@ export default function RegisterPage() {
         error.message.toLowerCase().includes('already in use') ||
         error.message.toLowerCase().includes('user already exists')
       ) {
-        setError('Email này đã được sử dụng. Vui lòng đăng nhập hoặc dùng email khác.');
+        setError('This email is already in use. Please log in or use a different email.');
       } else {
         setError(error.message);
       }
     } else if (data?.user && data.user.identities && data.user.identities.length === 0) {
-      setError('Email này đã được đăng ký tài khoản trước đó. Vui lòng đăng nhập!');
+      setError('This email is already registered. Please log in!');
     } else {
       if (data?.session) {
         router.push('/books');
       } else {
-        setSuccess('Đăng ký thành công! Bạn có thể chuyển sang trang Đăng nhập.');
+        setSuccess('Registration successful! You can now log in.');
       }
     }
   };

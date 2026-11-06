@@ -23,11 +23,11 @@ export default function BooksPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
-  // 1. Protected Route check (Khi F5 giữ nguyên trang, không bị văng)
+  // 1. Protected Route check (Preserves state on reload)
   if (loadingUser) {
     return (
       <div className="py-24 text-center text-slate-500 font-semibold text-base sm:text-lg">
-        ⏳ Đang tải dữ liệu kệ sách của bạn...
+        ⏳ Loading your bookshelf...
       </div>
     );
   }
@@ -38,20 +38,20 @@ export default function BooksPage() {
         <div className="w-16 h-16 bg-amber-100 text-amber-800 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
           🔒
         </div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Truy cập bị giới hạn</h2>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">Access Restricted</h2>
         <p className="text-slate-600 mb-6 text-sm">
-          Vui lòng đăng nhập tài khoản của bạn để xem và quản lý kệ sách cá nhân.
+          Please log in to your account to view and manage your personal bookshelf.
         </p>
         <Link href="/login">
           <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6">
-            Đăng nhập ngay
+            Log In Now
           </Button>
         </Link>
       </div>
     );
   }
 
-  // 2. [A] Xử lý thêm sách (Chặn hoàn toàn việc để trống)
+  // 2. [A] Handle Add Book (Strict non-empty validation)
   const handleAddBook = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -61,25 +61,25 @@ export default function BooksPage() {
     const numPages = Number(pages);
 
     if (!trimmedTitle) {
-      setFormError('Tiêu đề sách không được để trống');
+      setFormError('Book title cannot be empty');
       return;
     }
     if (trimmedTitle.length > 80) {
-      setFormError('Tiêu đề sách tối đa 80 ký tự');
+      setFormError('Book title must be at most 80 characters');
       return;
     }
 
     if (!trimmedAuthor) {
-      setFormError('Tên tác giả không được để trống');
+      setFormError('Author name cannot be empty');
       return;
     }
     if (trimmedAuthor.length > 60) {
-      setFormError('Tên tác giả tối đa 60 ký tự');
+      setFormError('Author name must be at most 60 characters');
       return;
     }
 
     if (!pages || isNaN(numPages) || numPages < 1 || numPages > 5000) {
-      setFormError('Số trang phải từ 1 đến 5000');
+      setFormError('Pages must be between 1 and 5000');
       return;
     }
 
@@ -93,7 +93,7 @@ export default function BooksPage() {
     setSubmitting(false);
 
     if (error) {
-      setFormError(error.message || 'Không thể thêm sách');
+      setFormError(error.message || 'Failed to add book');
     } else {
       setTitle('');
       setAuthor('');
@@ -102,7 +102,7 @@ export default function BooksPage() {
     }
   };
 
-  // 3. [B] Nút Advance di chuyển: read -> reading -> finished (Biến mất khi finished)
+  // 3. [B] Advance lifecycle button: read -> reading -> finished (Disappears when finished)
   const handleAdvance = async (book: Book) => {
     if (book.status === 'read') {
       await updateBookStatus(book.id, 'reading');
@@ -111,7 +111,7 @@ export default function BooksPage() {
     }
   };
 
-  // 4. [C] Lọc sách: Bỏ qua mọi phần tử để trống và lọc theo từ khóa, trạng thái
+  // 4. [C] Filter books: Exclude empty records and filter by keyword, status
   const filteredBooks = books
     .filter((b) => b.title && b.title.trim() !== '' && b.author && b.author.trim() !== '')
     .filter((b) => {
@@ -122,13 +122,13 @@ export default function BooksPage() {
       return matchesStatus && matchesSearch;
     });
 
-  // Nút Clear / Reset
+  // Clear / Reset button
   const handleReset = () => {
     setSearchTerm('');
     setSelectedStatus('all');
   };
 
-  // Tính toán Summary & Breakdown động theo danh sách đang hiển thị
+  // Dynamically calculate Summary & Breakdown based on currently displayed list
   const currentCount = filteredBooks.length;
   const totalPages = filteredBooks.reduce((sum, b) => sum + (b.pages || 0), 0);
   const readingCount = filteredBooks.filter((b) => b.status === 'reading').length;
@@ -137,23 +137,23 @@ export default function BooksPage() {
 
   return (
     <div className="space-y-6 py-4 sm:py-6">
-      {/* Tiêu đề trang */}
+      {/* Page Header */}
       <div className="border-b pb-4">
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
           <span>📚 My Shelf</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          Theo dõi tiến độ đọc, số trang và quản lý vòng đời sách trên kệ của bạn.
+          Track reading progress, log pages, and manage your book lifecycle from start to finish.
         </p>
       </div>
 
-      {/* KHUNG BỐ CỤC CHUẨN:
-          - Mobile 375px: 1 cột (grid-cols-1), form và chữ đọc rõ ràng không tràn viền.
-          - Desktop >= 1280px (xl:): Form và Summary nằm KẾ BÊN danh sách sách (xl:grid-cols-12). */}
+      {/* Responsive layout: 375px mobile (1 col), >= 1280px (xl:) Form & Summary side-by-side with The List */}
+
+
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 xl:gap-8 items-start">
         
         {/* ========================================================
-            CỘT TRÁI (xl:col-span-5): SUMMARY & FORM ADD A BOOK
+            LEFT COLUMN (xl:col-span-5): SUMMARY & FORM ADD A BOOK
            ======================================================== */}
         <div className="xl:col-span-5 space-y-6 w-full">
           
@@ -179,7 +179,7 @@ export default function BooksPage() {
                 </div>
               </div>
 
-              {/* Breakdown 3 trạng thái */}
+              {/* Status Breakdown */}
               <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
                 <div className="p-2 rounded bg-purple-50 border border-purple-100 text-purple-800">
                   <span className="font-bold text-base block">{readCount}</span>
@@ -300,15 +300,15 @@ export default function BooksPage() {
         </div>
 
         {/* ========================================================
-            CỘT PHẢI (xl:col-span-7): SEARCH, FILTER & THE LIST
+            RIGHT COLUMN (xl:col-span-7): SEARCH, FILTER & THE LIST
            ======================================================== */}
         <div className="xl:col-span-7 space-y-4 w-full">
           
-          {/* [C] SEARCH, FILTER VÀ NÚT CLEAR / RESET */}
+          {/* [C] SEARCH, FILTER AND CLEAR / RESET */}
           <div className="bg-white p-4 rounded-xl border shadow-sm space-y-3">
             <div className="flex gap-2 items-center">
               <Input
-                placeholder="🔍 Tìm theo tên sách hoặc tác giả..."
+                placeholder="🔍 Search by title or author..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="text-sm w-full"
@@ -325,7 +325,7 @@ export default function BooksPage() {
               )}
             </div>
 
-            {/* Các tab Filter */}
+            {/* Filter Tabs */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
               {(['all', 'reading', 'read', 'finished'] as const).map((st) => (
                 <button
@@ -344,18 +344,18 @@ export default function BooksPage() {
             </div>
           </div>
 
-          {/* [B] THE LIST (DANH SÁCH SÁCH) */}
+          {/* [B] THE LIST (BOOK LIST) */}
           {filteredBooks.length === 0 ? (
             <div
               data-testid="books-empty"
               className="py-16 text-center text-slate-500 bg-white rounded-xl border border-dashed"
             >
               <div className="text-3xl mb-2">📚</div>
-              <p className="font-semibold text-slate-700">Không tìm thấy sách nào</p>
+              <p className="font-semibold text-slate-700">No books found</p>
               <p className="text-xs text-slate-400 mt-1">
                 {books.length === 0
-                  ? 'Kệ sách của bạn đang trống. Hãy thêm cuốn sách đầu tiên ở form bên cạnh!'
-                  : 'Không có cuốn sách nào khớp với từ khóa hoặc bộ lọc.'}
+                  ? 'Your bookshelf is empty. Add your first book using the form!'
+                  : 'No books match your search or filter criteria.'}
               </p>
             </div>
           ) : (
@@ -371,7 +371,7 @@ export default function BooksPage() {
                       <h3 data-testid="book-title" className="font-bold text-slate-900 text-base leading-snug">
                         {book.title}
                       </h3>
-                      {/* Badge hiển thị trạng thái */}
+                      {/* Status Badge */}
                       <span
                         className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                           book.status === 'reading'
@@ -386,15 +386,15 @@ export default function BooksPage() {
                     </div>
 
                     <p className="text-xs text-slate-500">
-                      Tác giả: <span data-testid="book-author" className="font-semibold text-slate-700">{book.author}</span>
+                      Author: <span data-testid="book-author" className="font-semibold text-slate-700">{book.author}</span>
                       <span className="text-slate-300 mx-2">•</span>
-                      <span data-testid="book-pages" className="text-slate-600">{book.pages} trang</span>
+                      <span data-testid="book-pages" className="text-slate-600">{book.pages} pages</span>
                     </p>
                   </div>
 
-                  {/* CÁC NÚT THAO TÁC */}
+                  {/* ACTION BUTTONS */}
                   <div className="flex items-center gap-2 self-end sm:self-center">
-                    {/* NÚT ADVANCE: read -> reading -> finished (Biến mất khi finished) */}
+                    {/* ADVANCE BUTTON: read -> reading -> finished (Disappears when finished) */}
                     {book.status !== 'finished' && (
                       <Button
                         size="sm"
@@ -406,7 +406,7 @@ export default function BooksPage() {
                       </Button>
                     )}
 
-                    {/* NÚT DELETE */}
+                    {/* DELETE BUTTON */}
                     <Button
                       variant="ghost"
                       size="sm"
